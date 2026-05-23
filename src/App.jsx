@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import LoginView from "./components/auth/LoginView";
 import CajaView from "./components/caja/CajaView";
 import Sidebar from "./components/layout/Sidebar";
 import TopBar from "./components/layout/TopBar";
@@ -9,57 +10,124 @@ import SalesView from "./components/sales/SalesView";
 import StockView from "./components/stock/StockView";
 import HistoryView from "./components/history/HistoryView";
 
-import { loadAppData } from "./data/seed";
+import { setToken, getToken } from "./api/client";
+import {
+  createProduct,
+  createSale,
+  deleteProduct,
+  fetchMe,
+  fetchProducts,
+  fetchSales,
+  updateProduct,
+} from "./api/data";
 import { GS } from "./styles/globalStyles";
 import { getTheme } from "./theme";
 
-/**
- * App.jsx = "cerebro" de la aplicación.
- * - Guarda productos y ventas en memoria (useState)
- * - Los persiste en localStorage cuando cambian
- * - Decide qué pantalla mostrar según `view`
- */
 export default function App() {
+  const [authStatus, setAuthStatus] = useState("loading");
+  const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
   const [products, setProducts] = useState([]);
   const [sales, setSales] = useState([]);
   const [view, setView] = useState("dashboard");
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [error, setError] = useState("");
 
   const theme = getTheme(darkMode);
 
-  // 1) Al abrir la app: cargar datos guardados o datos de ejemplo
-  useEffect(() => {
-    const { products: p, sales: s } = loadAppData();
+  const loadData = useCallback(async () => {
+    const [p, s] = await Promise.all([fetchProducts(), fetchSales()]);
     setProducts(p);
     setSales(s);
-
-    const savedTheme = localStorage.getItem("darkMode");
-    if (savedTheme) {
-      setDarkMode(JSON.parse(savedTheme));
-    }
-
-    setReady(true);
   }, []);
 
-  // 2) Cada vez que cambian productos/ventas/tema → guardar en el navegador
-  useEffect(() => {
-    if (!ready) return;
-    localStorage.setItem("products", JSON.stringify(products));
-  }, [products, ready]);
+  const bootstrap = useCallback(async () => {
+    const savedTheme = localStorage.getItem("darkMode");
+    if (savedTheme) setDarkMode(JSON.parse(savedTheme));
+
+    if (!getToken()) {
+      setAuthStatus("guest");
+      setReady(true);
+      return;
+    }
+
+    try {
+      const { user: me } = await fetchMe();
+      setUser(me);
+      await loadData();
+      setAuthStatus("authenticated");
+    } catch {
+      setToken(null);
+      setAuthStatus("guest");
+    } finally {
+      setReady(true);
+    }
+  }, [loadData]);
 
   useEffect(() => {
-    if (!ready) return;
-    localStorage.setItem("sales", JSON.stringify(sales));
-  }, [sales, ready]);
+    bootstrap();
+  }, [bootstrap]);
 
   useEffect(() => {
     if (!ready) return;
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode, ready]);
 
-  if (!ready) {
+  const handleLogin = async (loggedUser) => {
+    setUser(loggedUser);
+    setAuthStatus("loading");
+    try {
+      await loadData();
+      setAuthStatus("authenticated");
+      setError("");
+    } catch (err) {
+      setToken(null);
+      setAuthStatus("guest");
+      setError(err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    setProducts([]);
+    setSales([]);
+    setAuthStatus("guest");
+    setView("dashboard");
+  };
+
+  const handleSaveProduct = async (data, editingId) => {
+    const payload = {
+      name: data.name,
+      category: data.category,
+      price: data.price,
+      cost: data.cost,
+      stock: data.stock,
+      minStock: data.minStock,
+      image: data.image,
+      desc: data.desc,
+    };
+
+    if (editingId) {
+      await updateProduct(editingId, payload);
+    } else {
+      await createProduct(payload);
+    }
+    await loadData();
+  };
+
+  const handleDeleteProduct = async (id) => {
+    await deleteProduct(id);
+    await loadData();
+  };
+
+  const handleCreateSale = async (sale) => {
+    await createSale(sale);
+    await loadData();
+  };
+
+  if (!ready || authStatus === "loading") {
     return (
       <div
         style={{
@@ -76,6 +144,18 @@ export default function App() {
     );
   }
 
+  if (authStatus === "guest") {
+    return (
+      <>
+        <style>{GS(theme)}</style>
+        <LoginView onSuccess={handleLogin} theme={theme} />
+        {error && (
+          <p style={{ textAlign: "center", color: theme.danger }}>{error}</p>
+        )}
+      </>
+    );
+  }
+
   return (
     <div style={{ display: "flex", height: "100vh", background: theme.bg }}>
       <style>{GS(theme)}</style>
@@ -88,6 +168,8 @@ export default function App() {
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         theme={theme}
+        user={user}
+        onLogout={handleLogout}
       />
 
       <div
@@ -95,16 +177,14 @@ export default function App() {
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          marginLeft: 0,
           minWidth: 0,
         }}
       >
         <TopBar
           view={view}
           setSidebarOpen={setSidebarOpen}
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
           theme={theme}
+          user={user}
         />
 
         <main
@@ -124,18 +204,17 @@ export default function App() {
           {view === "products" && (
             <ProductsView
               products={products}
-              setProducts={setProducts}
               theme={theme}
+              onSaveProduct={handleSaveProduct}
+              onDeleteProduct={handleDeleteProduct}
             />
           )}
 
           {view === "sales" && (
             <SalesView
               products={products}
-              setProducts={setProducts}
-              sales={sales}
-              setSales={setSales}
               theme={theme}
+              onCreateSale={handleCreateSale}
             />
           )}
 

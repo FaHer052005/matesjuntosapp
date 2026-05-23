@@ -7,11 +7,7 @@ const TITLES = {
   caja: "Caja",
 };
 
-export default function TopBar({
-  view,
-  setSidebarOpen,
-  theme,
-}) {
+export default function TopBar({ view, setSidebarOpen, theme, user }) {
   return (
     <header
       style={{
@@ -43,21 +39,35 @@ export default function TopBar({
         </div>
       </div>
 
-      <div
-        style={{
-          background: theme.bg,
-          color: theme.text,
-          padding: "10px 14px",
-          borderRadius: 12,
-          fontSize: 14,
-          whiteSpace: "nowrap",
-        }}
-      >
-        {new Date().toLocaleDateString("es-AR", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        })}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {user && (
+          <span
+            style={{
+              fontSize: 13,
+              color: theme.secondary,
+              display: "none",
+            }}
+            className="topbar-user"
+          >
+            {user.displayName}
+          </span>
+        )}
+        <div
+          style={{
+            background: theme.bg,
+            color: theme.text,
+            padding: "10px 14px",
+            borderRadius: 12,
+            fontSize: 14,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {new Date().toLocaleDateString("es-AR", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          })}
+        </div>
       </div>
     </header>
   );

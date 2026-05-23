@@ -6,6 +6,8 @@ export default function Sidebar({
   darkMode,
   setDarkMode,
   theme,
+  user,
+  onLogout,
 }) {
   const items = [
     { id: "dashboard", icon: "🏠", label: "Dashboard" },
@@ -83,7 +85,24 @@ export default function Sidebar({
           </button>
         ))}
 
-        <div style={{ marginTop: "auto", paddingTop: 16 }}>
+        <div style={{ marginTop: "auto", paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+          {user && (
+            <p style={{ fontSize: 13, opacity: 0.85, padding: "0 4px" }}>
+              👤 {user.displayName || user.username}
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={onLogout}
+            style={{
+              width: "100%",
+              color: "white",
+              borderColor: "rgba(255,255,255,0.3)",
+            }}
+          >
+            🚪 Salir
+          </button>
           <button
             type="button"
             className="btn-ghost"

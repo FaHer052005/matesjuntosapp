@@ -14,15 +14,10 @@ const paymentOptions = PMTS.map((m) => ({
  * El carrito vive solo acá (useState local).
  * Al confirmar, armamos un objeto `sale` estándar y lo mandamos al App.
  */
-export default function SalesView({
-  products,
-  setProducts,
-  sales,
-  setSales,
-  theme,
-}) {
+export default function SalesView({ products, theme, onCreateSale }) {
   const [cart, setCart] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("efectivo");
+  const [submitting, setSubmitting] = useState(false);
 
   const addToCart = (product) => {
     if (product.stock <= 0) {
@@ -86,7 +81,7 @@ export default function SalesView({
     [cart]
   );
 
-  const makeSale = () => {
+  const makeSale = async () => {
     if (cart.length === 0) return;
 
     for (const item of cart) {
@@ -98,7 +93,6 @@ export default function SalesView({
     }
 
     const sale = {
-      id: Date.now().toString(),
       date: new Date().toISOString(),
       paymentMethod,
       items: cart.map((item) => ({
@@ -114,20 +108,15 @@ export default function SalesView({
       note: "",
     };
 
-    setSales([sale, ...sales]);
-
-    setProducts(
-      products.map((product) => {
-        const inCart = cart.find((item) => item.id === product.id);
-        if (!inCart) return product;
-        return {
-          ...product,
-          stock: product.stock - inCart.quantity,
-        };
-      })
-    );
-
-    setCart([]);
+    setSubmitting(true);
+    try {
+      await onCreateSale(sale);
+      setCart([]);
+    } catch (err) {
+      alert(err.message || "No se pudo registrar la venta");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const cardStyle = {
@@ -264,14 +253,14 @@ export default function SalesView({
           <button
             type="button"
             onClick={makeSale}
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || submitting}
             style={{
               width: "100%",
               marginTop: 20,
-              opacity: cart.length === 0 ? 0.5 : 1,
+              opacity: cart.length === 0 || submitting ? 0.5 : 1,
             }}
           >
-            ✅ Finalizar venta
+            {submitting ? "Registrando…" : "✅ Finalizar venta"}
           </button>
         </aside>
       </div>

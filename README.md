@@ -1,71 +1,90 @@
 # Mates Juntos — App de gestión
 
-Sistema web para manejar **productos**, **ventas**, **stock** y **caja** del emprendimiento Mates Juntos.
+Sistema web con **login**, **PostgreSQL** y gestión de productos, ventas, stock, caja e historial.
 
-Funciona en el celular desde el navegador y se puede **instalar** como app (PWA): en Chrome → menú → *Instalar aplicación* o *Agregar a pantalla de inicio*.
+## Requisitos
 
-## Cómo correrla en tu computadora
+- Node.js 18+
+- Docker (recomendado) o PostgreSQL instalado localmente
+
+## Puesta en marcha (primera vez)
+
+### 1. Variables de entorno
+
+```bash
+cp .env.example .env
+```
+
+Editá `.env` si necesitás otro usuario/clave de base de datos.
+
+### 2. Base de datos PostgreSQL
 
 ```bash
 npm install
+npm run db:up          # levanta PostgreSQL en Docker
+npm run db:init        # crea tablas + usuarios + productos + ventas de ejemplo
+```
+
+### 3. Arrancar app (API + frontend)
+
+```bash
 npm run dev
 ```
 
-Abrí la URL que muestra la terminal (por ejemplo `http://localhost:5173`).
+- Web: http://localhost:5173  
+- API: http://localhost:3001  
 
-## Estructura del proyecto (qué hace cada parte)
+## Usuarios de prueba
+
+| Usuario | Contraseña   |
+|---------|--------------|
+| `admin` | `admin123`   |
+| `mates` | `matesjuntos`|
+
+Al abrir la app siempre verás la pantalla de **login**. Sin sesión válida no se accede al panel.
+
+## Base de datos (PostgreSQL)
+
+| Tabla | Contenido |
+|-------|-----------|
+| `users` | Usuarios y contraseñas (hash bcrypt) |
+| `products` | Catálogo y stock actual |
+| `sales` | Ventas registradas |
+| `sale_items` | Detalle de cada venta |
+| `stock_movements` | Movimientos de stock (ventas, carga inicial) |
+
+Esquema: `database/schema.sql`  
+Datos iniciales: `npm run db:init` → `server/scripts/init-db.js`
+
+## Estructura del proyecto
 
 ```
 matesjuntosapp/
-├── index.html          → Página HTML base; carga la app React
-├── public/
-│   └── manifest.json   → Config para instalar como app en el celular
-├── src/
-│   ├── main.jsx        → Punto de entrada: monta React en el DOM
-│   ├── App.jsx         → Cerebro: estado global, navegación, guardado
-│   ├── theme.js        → Colores del modo claro/oscuro
-│   ├── data/seed.js    → Productos de ejemplo la primera vez
-│   ├── utils/
-│   │   ├── constants.js → Categorías y métodos de pago
-│   │   └── helpers.js     → Formato de precios ($$) y fechas
-│   └── components/     → Cada pantalla de la app
-│       ├── dashboard/  → Resumen del negocio
-│       ├── products/   → Alta y edición de productos
-│       ├── sales/      → Punto de venta (carrito)
-│       ├── stock/      → Gráficos y alertas
-│       ├── caja/       → Totales por método de pago
-│       └── layout/     → Menú lateral y barra superior
+├── database/schema.sql    → Tablas PostgreSQL
+├── docker-compose.yml     → PostgreSQL en Docker
+├── server/                → API Node + Express
+│   ├── index.js
+│   ├── routes/            → auth, products, sales
+│   └── scripts/init-db.js
+└── src/                   → Frontend React
+    ├── api/               → Llamadas a la API
+    ├── components/auth/   → Pantalla de login
+    └── components/...     → Dashboard, ventas, etc.
 ```
 
-## Conceptos que vas a usar seguido
+## Scripts útiles
 
-| Concepto | Para qué sirve |
-|----------|----------------|
-| **Componente** | Un pedazo de pantalla reutilizable (ej. `SalesView`) |
-| **useState** | Guardar datos que cambian (productos, carrito, tema) |
-| **useEffect** | Hacer algo al cargar o cuando cambia algo (ej. guardar en localStorage) |
-| **Props** | Datos que el padre (`App`) pasa al hijo (una pantalla) |
-| **localStorage** | Base de datos del navegador; persiste sin servidor |
+| Comando | Qué hace |
+|---------|----------|
+| `npm run dev` | API + Vite en paralelo |
+| `npm run dev:client` | Solo frontend |
+| `npm run dev:server` | Solo API |
+| `npm run db:up` | Inicia PostgreSQL (Docker) |
+| `npm run db:init` | Crea tablas y datos de ejemplo |
+| `npm run build` | Build de producción del frontend |
 
-## Flujo de datos
+## Producción
 
-1. `App.jsx` tiene `products` y `sales`.
-2. Cada pantalla recibe esos datos y funciones para actualizarlos (`setProducts`, `setSales`).
-3. Cuando cambian, `useEffect` los guarda en `localStorage`.
-4. Al recargar la página, `loadAppData()` en `seed.js` los vuelve a leer.
-
-## Próximos pasos que podés hacer vos (con ayuda)
-
-1. **Exportar ventas a Excel/CSV** — ya hay `dlCSV` en `helpers.js`; conectar un botón en Caja.
-2. **Fotos desde el celular** — subir imagen en vez de pegar URL.
-3. **Backend real** — Firebase o una API propia para sincronizar entre dos celulares.
-4. **Usuarios/login** — si más personas usan la app.
-
-## Build para publicar
-
-```bash
-npm run build
-npm run preview
-```
-
-Los archivos quedan en `dist/`; podés subirlos a Netlify, Vercel o GitHub Pages gratis.
+- Cambiá `JWT_SECRET` en `.env` por una clave larga y aleatoria.
+- Usá contraseñas fuertes en PostgreSQL.
+- El frontend en producción debe apuntar a la API (`VITE_API_URL=https://tu-api.com`).

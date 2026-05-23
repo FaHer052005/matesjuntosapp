@@ -14,7 +14,12 @@ const filterOptions = [
   ...categoryOptions,
 ];
 
-export default function ProductsView({ products, setProducts, theme }) {
+export default function ProductsView({
+  products,
+  theme,
+  onSaveProduct,
+  onDeleteProduct,
+}) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [cost, setCost] = useState("");
@@ -26,6 +31,7 @@ export default function ProductsView({ products, setProducts, theme }) {
   const [filterCategory, setFilterCategory] = useState("all");
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -49,7 +55,7 @@ export default function ProductsView({ products, setProducts, theme }) {
     setEditingId(null);
   };
 
-  const saveProduct = () => {
+  const saveProduct = async () => {
     if (!name || !price || !cost || !stock) {
       alert("Completá nombre, precio, costo y stock");
       return;
@@ -65,26 +71,25 @@ export default function ProductsView({ products, setProducts, theme }) {
       minStock: Number(minStock) || 5,
     };
 
-    if (editingId) {
-      setProducts(
-        products.map((p) =>
-          p.id === editingId ? { ...p, ...data } : p
-        )
-      );
-    } else {
-      setProducts([
-        ...products,
-        { id: Date.now().toString(), ...data },
-      ]);
+    setSaving(true);
+    try {
+      await onSaveProduct(data, editingId);
+      resetForm();
+      setShowModal(false);
+    } catch (err) {
+      alert(err.message || "No se pudo guardar");
+    } finally {
+      setSaving(false);
     }
-
-    resetForm();
-    setShowModal(false);
   };
 
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     if (!confirm("¿Eliminar este producto?")) return;
-    setProducts(products.filter((p) => p.id !== id));
+    try {
+      await onDeleteProduct(id);
+    } catch (err) {
+      alert(err.message || "No se pudo eliminar");
+    }
   };
 
   const editProduct = (product) => {
@@ -165,8 +170,8 @@ export default function ProductsView({ products, setProducts, theme }) {
             />
 
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-              <button type="button" onClick={saveProduct} style={{ flex: 1 }}>
-                💾 Guardar
+              <button type="button" onClick={saveProduct} disabled={saving} style={{ flex: 1 }}>
+                {saving ? "Guardando…" : "💾 Guardar"}
               </button>
               <button
                 type="button"
