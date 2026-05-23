@@ -1,0 +1,18 @@
+{
+  "name": "Mates Juntos",
+  "short_name": "MatesJuntos",
+  "description": "Gestión de ventas e inventario para Mates Juntos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5EEE0",
+  "theme_color": "#1E3D2F",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "/icons.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

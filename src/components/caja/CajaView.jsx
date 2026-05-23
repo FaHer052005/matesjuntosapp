@@ -1,245 +1,92 @@
-export default function CajaView({
-  sales,
-}) {
+import { PMT_LBL } from "../../utils/constants";
+import { $$, dlCSV, fmtD } from "../../utils/helpers";
 
-  // TOTAL
-  const total = sales.reduce(
-
-    (acc, sale) =>
-
-      acc + sale.total,
-
-    0
-  );
-
-  // COUNT
+export default function CajaView({ sales, theme }) {
+  const total = sales.reduce((acc, sale) => acc + sale.total, 0);
   const count = sales.length;
+  const average = count > 0 ? total / count : 0;
 
-  // AVERAGE
-  const average =
-    count > 0
-      ? total / count
-      : 0;
-
-  // PAYMENT TOTALS
-  const efectivo = sales
-    .filter(
-      (s) =>
-        s.paymentMethod ===
-        "efectivo"
-    )
-    .reduce(
-      (acc, sale) =>
-        acc + sale.total,
-      0
-    );
-
-  const mp = sales
-    .filter(
-      (s) =>
-        s.paymentMethod ===
-        "mercadopago"
-    )
-    .reduce(
-      (acc, sale) =>
-        acc + sale.total,
-      0
-    );
-
-  const transferencia = sales
-    .filter(
-      (s) =>
-        s.paymentMethod ===
-        "transferencia"
-    )
-    .reduce(
-      (acc, sale) =>
-        acc + sale.total,
-      0
-    );
-
-  const tarjeta = sales
-    .filter(
-      (s) =>
-        s.paymentMethod ===
-        "tarjeta"
-    )
-    .reduce(
-      (acc, sale) =>
-        acc + sale.total,
-      0
-    );
+  const byMethod = (method) =>
+    sales
+      .filter((s) => s.paymentMethod === method)
+      .reduce((acc, sale) => acc + sale.total, 0);
 
   const cards = [
-
-    {
-      title: "Total vendido",
-
-      value:
-        `$${total.toLocaleString()}`,
-    },
-
-    {
-      title: "Ventas",
-
-      value: count,
-    },
-
-    {
-      title: "Ticket promedio",
-
-      value:
-        `$${average.toFixed(0)}`,
-    },
-
-    {
-      title: "Efectivo",
-
-      value:
-        `$${efectivo.toLocaleString()}`,
-    },
-
-    {
-      title: "Mercado Pago",
-
-      value:
-        `$${mp.toLocaleString()}`,
-    },
-
-    {
-      title: "Transferencia",
-
-      value:
-        `$${transferencia.toLocaleString()}`,
-    },
-
-    {
-      title: "Tarjeta",
-
-      value:
-        `$${tarjeta.toLocaleString()}`,
-    },
+    { title: "Total vendido", value: $$(total) },
+    { title: "Cantidad de ventas", value: count },
+    { title: "Ticket promedio", value: $$(average) },
+    { title: "Efectivo", value: $$(byMethod("efectivo")) },
+    { title: "Mercado Pago", value: $$(byMethod("mercadopago")) },
+    { title: "Transferencia", value: $$(byMethod("transferencia")) },
+    { title: "Tarjeta", value: $$(byMethod("tarjeta")) },
   ];
+
+  const cardStyle = {
+    background: theme.card,
+    color: theme.text,
+    padding: 24,
+    borderRadius: 18,
+    boxShadow: "0 2px 10px rgba(0,0,0,.08)",
+  };
 
   return (
     <div>
-
-      <h1
+      <div
         style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
           marginBottom: 30,
         }}
       >
-        💰 Caja
-      </h1>
+        <h1 style={{ color: theme.text }}>💵 Caja</h1>
+        <button
+          type="button"
+          className="btn-ghost"
+          onClick={() => dlCSV(sales)}
+          disabled={sales.length === 0}
+        >
+          ⬇️ Exportar ventas (CSV)
+        </button>
+      </div>
 
-      {/* CARDS */}
       <div
         style={{
           display: "grid",
-
-          gridTemplateColumns:
-            "repeat(auto-fit,minmax(220px,1fr))",
-
-          gap: 20,
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 16,
         }}
       >
-
-        {cards.map((card, index) => (
-
-          <div
-            key={index}
-
-            style={{
-              background: "white",
-
-              padding: 24,
-
-              borderRadius: 18,
-
-              boxShadow:
-                "0 2px 10px rgba(0,0,0,.08)",
-            }}
-          >
-
-            <p
-              style={{
-                color: "#666",
-
-                marginBottom: 10,
-              }}
-            >
-              {card.title}
-            </p>
-
-            <h2>
-              {card.value}
-            </h2>
-
+        {cards.map((c) => (
+          <div key={c.title} style={cardStyle}>
+            <p style={{ color: theme.secondary, marginBottom: 8 }}>{c.title}</p>
+            <h2>{c.value}</h2>
           </div>
-
         ))}
-
       </div>
 
-      {/* LAST SALES */}
-      <div
-        style={{
-          marginTop: 40,
-        }}
-      >
-
-        <h2
-          style={{
-            marginBottom: 20,
-          }}
-        >
-          Últimas ventas
-        </h2>
-
-        <div
-          style={{
-            display: "flex",
-
-            flexDirection: "column",
-
-            gap: 12,
-          }}
-        >
-
-          {sales.slice(0, 5).map((sale) => (
-
-            <div
-              key={sale.id}
-
-              style={{
-                background: "white",
-
-                padding: 20,
-
-                borderRadius: 16,
-              }}
-            >
-
-              <h3>
-                ${sale.total}
-              </h3>
-
-              <p>
-                {sale.date}
+      <div style={{ marginTop: 40 }}>
+        <h2 style={{ marginBottom: 16, color: theme.text }}>Últimas ventas</h2>
+        {sales.length === 0 ? (
+          <p style={{ color: theme.secondary }}>Sin ventas registradas.</p>
+        ) : (
+          sales.slice(0, 8).map((sale) => (
+            <div key={sale.id} style={{ ...cardStyle, marginBottom: 12 }}>
+              <h3>{ $$(sale.total) }</h3>
+              <p style={{ color: theme.secondary }}>
+                {fmtD(sale.date)} · {PMT_LBL[sale.paymentMethod] || sale.paymentMethod}
               </p>
-
-              <p>
-                {sale.paymentMethod}
+              <p style={{ fontSize: 14, marginTop: 6 }}>
+                {sale.items
+                  .map((i) => `${i.productName} ×${i.quantity}`)
+                  .join(" · ")}
               </p>
-
             </div>
-
-          ))}
-
-        </div>
-
+          ))
+        )}
       </div>
-
     </div>
   );
 }

@@ -9,79 +9,55 @@ const TITLES = {
 export default function TopBar({
   view,
   setSidebarOpen,
-  darkMode,
-  setDarkMode,
-}){
-
+  theme,
+}) {
   return (
-    <div
+    <header
       style={{
-        background: "white",
-
-        padding: 20,
-
-        borderBottom:
-          "1px solid #ddd",
-
+        background: theme.card,
+        color: theme.text,
+        padding: "16px 20px",
+        borderBottom: `1px solid ${theme.border}`,
         display: "flex",
-
-        justifyContent:
-          "space-between",
-
+        justifyContent: "space-between",
         alignItems: "center",
+        gap: 12,
       }}
     >
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-
-        {/* MENU */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <button
-          onClick={() =>
-            setSidebarOpen(true)
-          }
+          type="button"
+          className="btn-ghost"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Abrir menú"
         >
           ☰
         </button>
 
         <div>
-
-          <h2>
-            {TITLES[view]}
-          </h2>
-
-          <p
-            style={{
-              color: "#666",
-            }}
-          >
+          <h2 style={{ color: theme.text }}>{TITLES[view]}</h2>
+          <p style={{ color: theme.secondary, fontSize: 14 }}>
             Panel de gestión
           </p>
-
         </div>
-
       </div>
 
-      {/* DATE */}
       <div
         style={{
-          background: "#F5EEE0",
-
+          background: theme.bg,
+          color: theme.text,
           padding: "10px 14px",
-
           borderRadius: 12,
+          fontSize: 14,
+          whiteSpace: "nowrap",
         }}
       >
-        {new Date().toLocaleDateString(
-          "es-AR"
-        )}
+        {new Date().toLocaleDateString("es-AR", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        })}
       </div>
-
-    </div>
+    </header>
   );
 }

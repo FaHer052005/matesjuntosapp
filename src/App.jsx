@@ -1,190 +1,128 @@
 import { useEffect, useState } from "react";
 
-
 import CajaView from "./components/caja/CajaView";
 import Sidebar from "./components/layout/Sidebar";
 import TopBar from "./components/layout/TopBar";
-
 import DashboardView from "./components/dashboard/DashboardView";
 import ProductsView from "./components/products/ProductsView";
 import SalesView from "./components/sales/SalesView";
 import StockView from "./components/stock/StockView";
 
+import { loadAppData } from "./data/seed";
 import { GS } from "./styles/globalStyles";
+import { getTheme } from "./theme";
 
+/**
+ * App.jsx = "cerebro" de la aplicación.
+ * - Guarda productos y ventas en memoria (useState)
+ * - Los persiste en localStorage cuando cambian
+ * - Decide qué pantalla mostrar según `view`
+ */
 export default function App() {
-
-  // PRODUCTS
+  const [ready, setReady] = useState(false);
   const [products, setProducts] = useState([]);
-
-  // SALES
   const [sales, setSales] = useState([]);
-
-  // VIEW
   const [view, setView] = useState("dashboard");
+  const [darkMode, setDarkMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [darkMode, setDarkMode] =
-  useState(false);
+  const theme = getTheme(darkMode);
 
-  // MOBILE SIDEBAR
-  const [sidebarOpen, setSidebarOpen] =
-    useState(false);
-
-  // LOAD
+  // 1) Al abrir la app: cargar datos guardados o datos de ejemplo
   useEffect(() => {
+    const { products: p, sales: s } = loadAppData();
+    setProducts(p);
+    setSales(s);
 
-    const savedProducts =
-      localStorage.getItem("products");
-
-    const savedSales =
-      localStorage.getItem("sales");
-
-    if (savedProducts) {
-      setProducts(
-        JSON.parse(savedProducts)
-      );
+    const savedTheme = localStorage.getItem("darkMode");
+    if (savedTheme) {
+      setDarkMode(JSON.parse(savedTheme));
     }
 
-    if (savedSales) {
-      setSales(
-        JSON.parse(savedSales)
-      );
-    }
-
+    setReady(true);
   }, []);
 
-  // SAVE PRODUCTS
+  // 2) Cada vez que cambian productos/ventas/tema → guardar en el navegador
   useEffect(() => {
-
-    localStorage.setItem(
-      "products",
-      JSON.stringify(products)
-    );
-
-  }, [products]);
-
-  // SAVE SALES
-  useEffect(() => {
-
-    localStorage.setItem(
-      "sales",
-      JSON.stringify(sales)
-    );
-
-  }, [sales]);
+    if (!ready) return;
+    localStorage.setItem("products", JSON.stringify(products));
+  }, [products, ready]);
 
   useEffect(() => {
+    if (!ready) return;
+    localStorage.setItem("sales", JSON.stringify(sales));
+  }, [sales, ready]);
 
-  const savedTheme =
-    localStorage.getItem(
-      "darkMode"
-    );
+  useEffect(() => {
+    if (!ready) return;
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+  }, [darkMode, ready]);
 
-  if (savedTheme) {
-
-    setDarkMode(
-      JSON.parse(savedTheme)
+  if (!ready) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: theme.bg,
+          color: theme.text,
+        }}
+      >
+        Cargando Mates Juntos…
+      </div>
     );
   }
 
-}, []);
-
-useEffect(() => {
-
-  localStorage.setItem(
-
-    "darkMode",
-
-    JSON.stringify(darkMode)
-  );
-
-}, [darkMode]);
-
-const theme = {
-
-  bg:
-    darkMode
-      ? "#121212"
-      : "#F5EEE0",
-
-  card:
-    darkMode
-      ? "#1E1E1E"
-      : "white",
-
-  text:
-    darkMode
-      ? "white"
-      : "#111",
-
-  secondary:
-    darkMode
-      ? "#aaa"
-      : "#666",
-
-  border:
-    darkMode
-      ? "#333"
-      : "#ddd",
-};
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-      }}
-    >
+    <div style={{ display: "flex", height: "100vh", background: theme.bg }}>
+      <style>{GS(theme)}</style>
 
-      <style>{GS()}</style>
-
-      {/* SIDEBAR */}
       <Sidebar
         view={view}
         setView={setView}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        theme={theme}
       />
 
-      {/* CONTENT */}
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          background: theme.bg,
+          marginLeft: 0,
+          minWidth: 0,
         }}
       >
-
-        {/* TOPBAR */}
         <TopBar
-  view={view}
-  setSidebarOpen={setSidebarOpen}
-  darkMode={darkMode}
-  setDarkMode={setDarkMode}
-/>
+          view={view}
+          setSidebarOpen={setSidebarOpen}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          theme={theme}
+        />
 
-        {/* PAGE */}
-        <div
+        <main
           style={{
             flex: 1,
-            padding: 20,
+            padding: 16,
             overflow: "auto",
+            background: theme.bg,
           }}
         >
-
           {view === "dashboard" && (
-            <DashboardView
-              products={products}
-              sales={sales}
-            />
+            <DashboardView products={products} sales={sales} theme={theme} />
           )}
 
           {view === "products" && (
             <ProductsView
               products={products}
               setProducts={setProducts}
+              theme={theme}
             />
           )}
 
@@ -194,25 +132,19 @@ const theme = {
               setProducts={setProducts}
               sales={sales}
               setSales={setSales}
+              theme={theme}
             />
           )}
 
-          <StockView
-          products={products}
-          sales={sales}
-          />
+          {view === "stock" && (
+            <StockView products={products} sales={sales} theme={theme} />
+          )}
 
           {view === "caja" && (
-            <CajaView
-              sales={sales}
-            />
+            <CajaView sales={sales} theme={theme} />
           )}
-
-        </div>
+        </main>
       </div>
     </div>
   );
 }
-
-
-  

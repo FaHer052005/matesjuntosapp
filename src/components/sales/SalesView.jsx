@@ -1,523 +1,274 @@
 import { useMemo, useState } from "react";
 
+import { PMTS, PMT_LBL } from "../../utils/constants";
+import { $$ } from "../../utils/helpers";
+
+/**
+ * Pantalla de ventas = punto de venta (POS).
+ * El carrito vive solo acá (useState local).
+ * Al confirmar, armamos un objeto `sale` estándar y lo mandamos al App.
+ */
 export default function SalesView({
   products,
   setProducts,
   sales,
   setSales,
+  theme,
 }) {
+  const [cart, setCart] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState("efectivo");
 
-  // CART
-  const [cart, setCart] =
-    useState([]);
-
-  // PAYMENT
-  const [paymentMethod,
-    setPaymentMethod] =
-    useState("efectivo");
-
-  // ADD PRODUCT
-  const addToCart = (
-    product
-  ) => {
-
-    const exists =
-      cart.find(
-        (item) =>
-          item.id === product.id
-      );
-
-    // EXISTS
-    if (exists) {
-
-      setCart(
-
-        cart.map((item) =>
-
-          item.id === product.id
-
-            ? {
-                ...item,
-
-                quantity:
-                  item.quantity + 1,
-              }
-
-            : item
-        )
-      );
-    }
-
-    // NEW
-    else {
-
-      setCart([
-        ...cart,
-        {
-          ...product,
-          quantity: 1,
-        },
-      ]);
-    }
-  };
-
-  // REMOVE
-  const removeFromCart = (
-    id
-  ) => {
-
-    setCart(
-
-      cart.filter(
-        (item) =>
-          item.id !== id
-      )
-    );
-  };
-
-  // CHANGE QTY
-  const changeQuantity = (
-    id,
-    value
-  ) => {
-
-    setCart(
-
-      cart.map((item) =>
-
-        item.id === id
-
-          ? {
-              ...item,
-
-              quantity:
-                Math.max(
-                  1,
-                  item.quantity +
-                    value
-                ),
-            }
-
-          : item
-      )
-    );
-  };
-
-  // TOTAL
-  const total =
-    useMemo(() => {
-
-      return cart.reduce(
-
-        (acc, item) =>
-
-          acc +
-          item.price *
-            item.quantity,
-
-        0
-      );
-
-    }, [cart]);
-
-  // SALE
-  const makeSale = () => {
-
-    if (
-      cart.length === 0
-    ) {
+  const addToCart = (product) => {
+    if (product.stock <= 0) {
+      alert(`Sin stock de ${product.name}`);
       return;
     }
 
-    // SALE OBJECT
+    setCart((prev) => {
+      const exists = prev.find((item) => item.id === product.id);
+      if (exists) {
+        if (exists.quantity >= product.stock) {
+          alert(`Solo quedan ${product.stock} unidades`);
+          return prev;
+        }
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (id) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const changeQuantity = (id, delta) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const product = products.find((p) => p.id === id);
+        const max = product?.stock ?? item.quantity;
+        const next = Math.max(1, item.quantity + delta);
+        if (next > max) {
+          alert(`Solo quedan ${max} unidades`);
+          return item;
+        }
+        return { ...item, quantity: next };
+      })
+    );
+  };
+
+  const total = useMemo(
+    () =>
+      cart.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0
+      ),
+    [cart]
+  );
+
+  const profit = useMemo(
+    () =>
+      cart.reduce(
+        (acc, item) =>
+          acc + (item.price - (item.cost || 0)) * item.quantity,
+        0
+      ),
+    [cart]
+  );
+
+  const makeSale = () => {
+    if (cart.length === 0) return;
+
+    for (const item of cart) {
+      const product = products.find((p) => p.id === item.id);
+      if (!product || product.stock < item.quantity) {
+        alert(`Stock insuficiente para ${item.name}`);
+        return;
+      }
+    }
+
     const sale = {
-
-      id: Date.now(),
-
-      date:
-        new Date()
-
-          .toLocaleString(),
-
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
       paymentMethod,
-
-      items: cart,
-
+      items: cart.map((item) => ({
+        productId: item.id,
+        productName: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        unitCost: item.cost || 0,
+      })),
       total,
+      profit,
+      note: "",
     };
 
-    // SAVE SALE
-    setSales([
-      sale,
-      ...sales,
-    ]);
+    setSales([sale, ...sales]);
 
-    // UPDATE STOCK
     setProducts(
-
-      products.map(
-        (product) => {
-
-          const found =
-            cart.find(
-              (item) =>
-                item.id ===
-                product.id
-            );
-
-          if (!found) {
-            return product;
-          }
-
-          return {
-            ...product,
-
-            stock:
-              product.stock -
-              found.quantity,
-          };
-        }
-      )
+      products.map((product) => {
+        const inCart = cart.find((item) => item.id === product.id);
+        if (!inCart) return product;
+        return {
+          ...product,
+          stock: product.stock - inCart.quantity,
+        };
+      })
     );
 
-    // CLEAR
     setCart([]);
   };
 
+  const cardStyle = {
+    background: theme.card,
+    color: theme.text,
+    padding: 18,
+    borderRadius: 18,
+    boxShadow: "0 2px 10px rgba(0,0,0,.08)",
+  };
+
   return (
-
     <div>
+      <h1 style={{ marginBottom: 20, color: theme.text }}>💰 Nueva venta</h1>
 
-      {/* TITLE */}
-      <h1
-        style={{
-          marginBottom: 20,
-        }}
-      >
-        💰 Ventas
-      </h1>
+      <div className="sales-layout">
+        <section>
+          <h2 style={{ marginBottom: 16, color: theme.text }}>Productos</h2>
 
-      {/* GRID */}
-      <div
-        style={{
-          display: "grid",
-
-          gridTemplateColumns:
-            "1fr 380px",
-
-          gap: 20,
-        }}
-      >
-
-        {/* PRODUCTS */}
-        <div>
-
-          <h2
-            style={{
-              marginBottom: 16,
-            }}
-          >
-            Productos
-          </h2>
+          {products.length === 0 && (
+            <p style={{ color: theme.secondary }}>
+              Primero cargá productos en la sección Productos.
+            </p>
+          )}
 
           <div
             style={{
               display: "grid",
-
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(220px,1fr))",
-
-              gap: 18,
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 16,
             }}
           >
-
-            {products.map(
-              (product) => (
-
-              <div
-                key={product.id}
-
-                style={{
-                  background:
-                    "white",
-
-                  padding: 18,
-
-                  borderRadius: 18,
-
-                  boxShadow:
-                    "0 2px 10px rgba(0,0,0,.08)",
-                }}
-              >
-
-                {/* IMAGE */}
+            {products.map((product) => (
+              <article key={product.id} style={cardStyle}>
                 {product.image && (
-
                   <img
-                    src={
-                      product.image
-                    }
-
-                    alt={
-                      product.name
-                    }
-
+                    src={product.image}
+                    alt={product.name}
                     style={{
-                      width:
-                        "100%",
-
-                      height:
-                        180,
-
-                      objectFit:
-                        "cover",
-
-                      borderRadius:
-                        12,
-
-                      marginBottom:
-                        12,
+                      width: "100%",
+                      height: 140,
+                      objectFit: "cover",
+                      borderRadius: 12,
+                      marginBottom: 10,
                     }}
                   />
-
                 )}
-
-                <h3>
-                  {product.name}
-                </h3>
-
-                <p>
-                  $
-                  {
-                    product.price
-                  }
+                <h3>{product.name}</h3>
+                <p style={{ color: theme.secondary }}>{ $$(product.price) }</p>
+                <p style={{ color: theme.secondary, fontSize: 14 }}>
+                  Stock: {product.stock}
                 </p>
-
-                <p>
-                  Stock:
-                  {" "}
-                  {
-                    product.stock
-                  }
-                </p>
-
                 <button
-                  onClick={() =>
-                    addToCart(
-                      product
-                    )
-                  }
-
-                  style={{
-                    marginTop: 14,
-                  }}
+                  type="button"
+                  onClick={() => addToCart(product)}
+                  disabled={product.stock <= 0}
+                  style={{ marginTop: 12, width: "100%", opacity: product.stock <= 0 ? 0.5 : 1 }}
                 >
                   ➕ Agregar
                 </button>
-
-              </div>
-
+              </article>
             ))}
-
           </div>
+        </section>
 
-        </div>
-
-        {/* CART */}
-        <div
+        <aside
           style={{
-            background: "white",
-
-            padding: 20,
-
-            borderRadius: 18,
-
+            ...cardStyle,
             height: "fit-content",
-
             position: "sticky",
-
-            top: 0,
-
-            boxShadow:
-              "0 2px 10px rgba(0,0,0,.08)",
+            top: 8,
           }}
         >
+          <h2 style={{ marginBottom: 16 }}>🛒 Carrito</h2>
 
-          <h2
-            style={{
-              marginBottom: 20,
-            }}
-          >
-            🛒 Carrito
-          </h2>
-
-          {/* EMPTY */}
           {cart.length === 0 && (
-            <p>
-              No hay productos
-            </p>
+            <p style={{ color: theme.secondary }}>Todavía no agregaste nada.</p>
           )}
 
-          {/* ITEMS */}
-          <div
-            style={{
-              display: "flex",
-
-              flexDirection:
-                "column",
-
-              gap: 14,
-            }}
-          >
-
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {cart.map((item) => (
-
               <div
                 key={item.id}
-
                 style={{
-                  borderBottom:
-                    "1px solid #eee",
-
+                  borderBottom: `1px solid ${theme.border}`,
                   paddingBottom: 10,
                 }}
               >
-
-                <h4>
-                  {item.name}
-                </h4>
-
-                <p>
-                  $
-                  {item.price}
+                <strong>{item.name}</strong>
+                <p style={{ color: theme.secondary, fontSize: 14 }}>
+                  { $$(item.price) } × {item.quantity}
                 </p>
-
-                {/* QTY */}
-                <div
-                  style={{
-                    display:
-                      "flex",
-
-                    alignItems:
-                      "center",
-
-                    gap: 10,
-
-                    marginTop: 8,
-                  }}
-                >
-
-                  <button
-                    onClick={() =>
-                      changeQuantity(
-                        item.id,
-                        -1
-                      )
-                    }
-                  >
-                    ➖
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button type="button" onClick={() => changeQuantity(item.id, -1)}>
+                    −
                   </button>
-
-                  <span>
-                    {
-                      item.quantity
-                    }
-                  </span>
-
-                  <button
-                    onClick={() =>
-                      changeQuantity(
-                        item.id,
-                        1
-                      )
-                    }
-                  >
-                    ➕
+                  <span style={{ alignSelf: "center" }}>{item.quantity}</span>
+                  <button type="button" onClick={() => changeQuantity(item.id, 1)}>
+                    +
                   </button>
-
                   <button
-                    onClick={() =>
-                      removeFromCart(
-                        item.id
-                      )
-                    }
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => removeFromCart(item.id)}
                   >
-                    ❌
+                    Quitar
                   </button>
-
                 </div>
-
               </div>
-
             ))}
-
           </div>
 
-          {/* TOTAL */}
-          <h2
-            style={{
-              marginTop: 20,
-            }}
-          >
-            Total:
-            {" "}
-            ${total}
-          </h2>
+          <div style={{ marginTop: 20 }}>
+            <p style={{ color: theme.secondary }}>Ganancia estimada</p>
+            <p style={{ fontSize: 18, fontWeight: 700 }}>{ $$(profit) }</p>
+            <p style={{ color: theme.secondary, marginTop: 12 }}>Total</p>
+            <p style={{ fontSize: 26, fontWeight: 700 }}>{ $$(total) }</p>
+          </div>
 
-          {/* PAYMENT */}
+          <label style={{ display: "block", marginTop: 16, fontSize: 14 }}>
+            Método de pago
+          </label>
           <select
-            value={
-              paymentMethod
-            }
-
-            onChange={(e) =>
-              setPaymentMethod(
-                e.target.value
-              )
-            }
-
-            style={{
-              marginTop: 16,
-
-              width: "100%",
-            }}
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            style={{ width: "100%", marginTop: 6 }}
           >
-
-            <option value="efectivo">
-              Efectivo
-            </option>
-
-            <option value="transferencia">
-              Transferencia
-            </option>
-
-            <option value="mercadopago">
-              Mercado Pago
-            </option>
-
+            {PMTS.map((m) => (
+              <option key={m} value={m}>
+                {PMT_LBL[m]}
+              </option>
+            ))}
           </select>
 
-          {/* FINISH */}
           <button
+            type="button"
             onClick={makeSale}
-
+            disabled={cart.length === 0}
             style={{
               width: "100%",
-
               marginTop: 20,
-
-              padding: 14,
-
-              fontSize: 16,
+              opacity: cart.length === 0 ? 0.5 : 1,
             }}
           >
             ✅ Finalizar venta
           </button>
-
-        </div>
-
+        </aside>
       </div>
-
     </div>
   );
 }
