@@ -11,6 +11,7 @@ export default function Sidebar({
     { id: "dashboard", icon: "🏠", label: "Dashboard" },
     { id: "products", icon: "📦", label: "Productos" },
     { id: "sales", icon: "💰", label: "Ventas" },
+    { id: "history", icon: "🧾", label: "Historial" },
     { id: "stock", icon: "📊", label: "Stock" },
     { id: "caja", icon: "💵", label: "Caja" },
   ];

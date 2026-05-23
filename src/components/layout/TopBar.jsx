@@ -2,6 +2,7 @@ const TITLES = {
   dashboard: "Dashboard",
   products: "Productos",
   sales: "Ventas",
+  history: "Historial",
   stock: "Stock",
   caja: "Caja",
 };

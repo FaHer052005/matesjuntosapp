@@ -7,6 +7,7 @@ import DashboardView from "./components/dashboard/DashboardView";
 import ProductsView from "./components/products/ProductsView";
 import SalesView from "./components/sales/SalesView";
 import StockView from "./components/stock/StockView";
+import HistoryView from "./components/history/HistoryView";
 
 import { loadAppData } from "./data/seed";
 import { GS } from "./styles/globalStyles";
@@ -144,6 +145,10 @@ export default function App() {
 
           {view === "caja" && (
             <CajaView sales={sales} theme={theme} />
+          )}
+
+          {view === "history" && (
+            <HistoryView sales={sales} theme={theme} />
           )}
         </main>
       </div>

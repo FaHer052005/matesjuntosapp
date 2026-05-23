@@ -139,6 +139,87 @@ export const GS = (theme) => `
     }
   }
 
+  /* Historial de ventas: scroll interno sin pelear con la página */
+  .history-view {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .history-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .history-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: ${theme?.secondary ?? "#666"};
+    text-align: left;
+  }
+
+  .history-period-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .history-list-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 280px;
+    max-height: min(70vh, calc(100dvh - 320px));
+    overflow: hidden;
+  }
+
+  .history-list-scroll {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding: 8px 16px 16px;
+  }
+
+  .history-group {
+    margin-bottom: 20px;
+  }
+
+  .history-group-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: ${theme?.accent ?? "#2A6041"};
+    margin: 12px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid ${theme?.border ?? "#ddd"};
+    text-transform: capitalize;
+  }
+
+  .history-sale-row {
+    padding: 14px 0;
+    border-bottom: 1px solid ${theme?.border ?? "#eee"};
+    text-align: left;
+  }
+
+  .history-sale-main {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .history-list-panel {
+      max-height: min(65vh, calc(100dvh - 380px));
+    }
+  }
+
   ::-webkit-scrollbar {
     width: 8px;
   }

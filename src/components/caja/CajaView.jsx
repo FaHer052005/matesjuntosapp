@@ -1,5 +1,4 @@
-import { PMT_LBL } from "../../utils/constants";
-import { $$, dlCSV, fmtD } from "../../utils/helpers";
+import { $$, dlCSV } from "../../utils/helpers";
 
 export default function CajaView({ sales, theme }) {
   const total = sales.reduce((acc, sale) => acc + sale.total, 0);
@@ -67,26 +66,9 @@ export default function CajaView({ sales, theme }) {
         ))}
       </div>
 
-      <div style={{ marginTop: 40 }}>
-        <h2 style={{ marginBottom: 16, color: theme.text }}>Últimas ventas</h2>
-        {sales.length === 0 ? (
-          <p style={{ color: theme.secondary }}>Sin ventas registradas.</p>
-        ) : (
-          sales.slice(0, 8).map((sale) => (
-            <div key={sale.id} style={{ ...cardStyle, marginBottom: 12 }}>
-              <h3>{ $$(sale.total) }</h3>
-              <p style={{ color: theme.secondary }}>
-                {fmtD(sale.date)} · {PMT_LBL[sale.paymentMethod] || sale.paymentMethod}
-              </p>
-              <p style={{ fontSize: 14, marginTop: 6 }}>
-                {sale.items
-                  .map((i) => `${i.productName} ×${i.quantity}`)
-                  .join(" · ")}
-              </p>
-            </div>
-          ))
-        )}
-      </div>
+      <p style={{ marginTop: 24, color: theme.secondary, fontSize: 14 }}>
+        El historial completo con filtros está en el menú <strong>Historial</strong>.
+      </p>
     </div>
   );
 }
