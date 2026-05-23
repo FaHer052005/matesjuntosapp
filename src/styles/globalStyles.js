@@ -80,10 +80,6 @@ export const GS = (theme) => `
   }
 
   .select-field-menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
     margin: 0;
     padding: 6px;
     list-style: none;
@@ -91,10 +87,12 @@ export const GS = (theme) => `
     color: ${theme?.text ?? "#1A1714"};
     border: 1px solid ${theme?.border ?? "#ddd"};
     border-radius: 12px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-    max-height: min(280px, 50vh);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+    overflow-x: hidden;
     overflow-y: auto;
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .select-field-option {
