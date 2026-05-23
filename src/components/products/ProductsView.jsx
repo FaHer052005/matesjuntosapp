@@ -1,7 +1,18 @@
 import { useMemo, useState } from "react";
 
+import SelectField from "../ui/SelectField";
 import { CATS, CAT_LBL } from "../../utils/constants";
 import { $$ } from "../../utils/helpers";
+
+const categoryOptions = CATS.map((cat) => ({
+  value: cat,
+  label: CAT_LBL[cat],
+}));
+
+const filterOptions = [
+  { value: "all", label: "Todas las categorías" },
+  ...categoryOptions,
+];
 
 export default function ProductsView({ products, setProducts, theme }) {
   const [name, setName] = useState("");
@@ -126,7 +137,14 @@ export default function ProductsView({ products, setProducts, theme }) {
         >
           <div
             className="card"
-            style={{ width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 10 }}
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              overflow: "visible",
+            }}
           >
             <h2>{editingId ? "Editar producto" : "Nuevo producto"}</h2>
 
@@ -137,13 +155,14 @@ export default function ProductsView({ products, setProducts, theme }) {
             <input placeholder="Stock mínimo (alerta)" type="number" value={minStock} onChange={(e) => setMinStock(e.target.value)} />
             <input placeholder="URL de imagen (opcional)" value={image} onChange={(e) => setImage(e.target.value)} />
 
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              {CATS.map((cat) => (
-                <option key={cat} value={cat}>
-                  {CAT_LBL[cat]}
-                </option>
-              ))}
-            </select>
+            <SelectField
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+              theme={theme}
+              aria-label="Categoría del producto"
+              menuZIndex={11000}
+            />
 
             <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
               <button type="button" onClick={saveProduct} style={{ flex: 1 }}>
@@ -172,14 +191,14 @@ export default function ProductsView({ products, setProducts, theme }) {
           onChange={(e) => setSearch(e.target.value)}
           style={{ flex: 1, minWidth: 200 }}
         />
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-          <option value="all">Todas las categorías</option>
-          {CATS.map((cat) => (
-            <option key={cat} value={cat}>
-              {CAT_LBL[cat]}
-            </option>
-          ))}
-        </select>
+        <SelectField
+          value={filterCategory}
+          onChange={setFilterCategory}
+          options={filterOptions}
+          theme={theme}
+          aria-label="Filtrar por categoría"
+          style={{ minWidth: 200 }}
+        />
       </div>
 
       <div

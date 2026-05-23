@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 
+import SelectField from "../ui/SelectField";
 import { PMTS, PMT_LBL } from "../../utils/constants";
 import { $$ } from "../../utils/helpers";
+
+const paymentOptions = PMTS.map((m) => ({
+  value: m,
+  label: PMT_LBL[m],
+}));
 
 /**
  * Pantalla de ventas = punto de venta (POS).
@@ -192,6 +198,8 @@ export default function SalesView({
             height: "fit-content",
             position: "sticky",
             top: 8,
+            overflow: "visible",
+            zIndex: 2,
           }}
         >
           <h2 style={{ marginBottom: 16 }}>🛒 Carrito</h2>
@@ -243,17 +251,15 @@ export default function SalesView({
           <label style={{ display: "block", marginTop: 16, fontSize: 14 }}>
             Método de pago
           </label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            style={{ width: "100%", marginTop: 6 }}
-          >
-            {PMTS.map((m) => (
-              <option key={m} value={m}>
-                {PMT_LBL[m]}
-              </option>
-            ))}
-          </select>
+          <div style={{ marginTop: 6 }}>
+            <SelectField
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              options={paymentOptions}
+              theme={theme}
+              aria-label="Método de pago"
+            />
+          </div>
 
           <button
             type="button"

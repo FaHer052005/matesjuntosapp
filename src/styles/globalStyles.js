@@ -35,18 +35,86 @@ export const GS = (theme) => `
     border: 1px solid ${theme?.border ?? "#ddd"};
   }
 
-  input, select, textarea {
+  input, textarea {
     border: 1px solid ${theme?.border ?? "#ddd"};
     padding: 12px;
     border-radius: 12px;
     outline: none;
     min-width: 0;
+    width: 100%;
     background: ${theme?.card ?? "#fff"};
     color: ${theme?.text ?? "#1A1714"};
   }
 
-  input:focus, select:focus, textarea:focus {
+  input:focus, textarea:focus {
     border-color: ${theme?.accent ?? "#2A6041"};
+  }
+
+  /* Selector custom (SelectField.jsx) */
+  .select-field-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid ${theme?.border ?? "#ddd"};
+    background: ${theme?.card ?? "#fff"};
+    color: ${theme?.text ?? "#1A1714"};
+    font-weight: 500;
+    text-align: left;
+  }
+
+  .select-field-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .select-field-chevron {
+    flex-shrink: 0;
+    font-size: 11px;
+    opacity: 0.55;
+  }
+
+  .select-field-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: ${theme?.card ?? "#fff"};
+    color: ${theme?.text ?? "#1A1714"};
+    border: 1px solid ${theme?.border ?? "#ddd"};
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+    max-height: min(280px, 50vh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .select-field-option {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: transparent;
+    color: ${theme?.text ?? "#1A1714"};
+    font-weight: 400;
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .select-field-option.is-selected {
+    background: ${theme?.accent ?? "#2A6041"}22;
+    font-weight: 600;
+  }
+
+  .select-field-option:hover {
+    background: ${theme?.accent ?? "#2A6041"}15;
   }
 
   h1, h2, h3 {

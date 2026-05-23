@@ -11,7 +11,14 @@ import {
   YAxis,
 } from "recharts";
 
+import SelectField from "../ui/SelectField";
 import { $$ } from "../../utils/helpers";
+
+const rangeOptions = [
+  { value: "all", label: "Toda la historia" },
+  { value: "7", label: "Últimos 7 días" },
+  { value: "30", label: "Últimos 30 días" },
+];
 
 function isLowStock(p) {
   return p.stock <= (p.minStock ?? 5);
@@ -110,11 +117,14 @@ export default function StockView({ products, sales, theme }) {
         }}
       >
         <h1 style={{ color: theme.text }}>📊 Stock y reportes</h1>
-        <select value={range} onChange={(e) => setRange(e.target.value)}>
-          <option value="all">Toda la historia</option>
-          <option value="7">Últimos 7 días</option>
-          <option value="30">Últimos 30 días</option>
-        </select>
+        <SelectField
+          value={range}
+          onChange={setRange}
+          options={rangeOptions}
+          theme={theme}
+          aria-label="Período del reporte"
+          style={{ minWidth: 200 }}
+        />
       </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>

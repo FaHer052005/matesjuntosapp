@@ -110,8 +110,10 @@ export default function App() {
           style={{
             flex: 1,
             padding: 16,
-            overflow: "auto",
+            overflowX: "hidden",
+            overflowY: "auto",
             background: theme.bg,
+            WebkitOverflowScrolling: "touch",
           }}
         >
           {view === "dashboard" && (
