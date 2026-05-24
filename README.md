@@ -31,15 +31,7 @@ npm run db:init        # crea tablas + usuarios + productos + ventas de ejemplo
 npm run dev
 ```
 
-- Web: http://localhost:5173  
-- API: http://localhost:3001  
-
-## Usuarios de prueba
-
-| Usuario | Contraseña   |
-|---------|--------------|
-| `admin` | `admin123`   |
-| `mates` | `matesjuntos`|
+- 
 
 Al abrir la app siempre verás la pantalla de **login**. Sin sesión válida no se accede al panel.
 
