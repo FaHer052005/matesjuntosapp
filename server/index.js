@@ -1,7 +1,6 @@
+import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import "dotenv/config";
-
 import { pool } from "./db.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/products.js";
@@ -26,6 +25,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/sales", saleRoutes);
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`API Mates Juntos → http://localhost:${PORT}`);
 });
